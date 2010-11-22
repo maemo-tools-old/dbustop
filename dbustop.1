@@ -1,0 +1,431 @@
+.TH dbustop 1 2010-11-19
+.SH NAME
+.
+dbustop \- display D-Bus activity in a top-like manner
+.
+.
+.SH SYNOPSIS
+.
+dbustop
+.I "[OPTIONS]"
+.
+.
+.SH DESCRIPTION
+.
+.B dbustop
+shows a statistical overview of D-Bus activity to help answer the
+question:
+.IR "What Just Happened?" .
+It is command driven, with readline support in interactive mode.  The
+easiest way to start is to hit the Return key, that prints the overview
+of active clients (which will be probably empty if no activity happened
+on the bus).  Unlike the casual
+.BR top (1)
+program,
+.B dbustop's
+counters are not per sample interval, but cumulative.
+.
+.
+.SH OPTIONS
+.TP
+.B -S, --session
+Listen on the session bus.
+.TP
+.B -Y, --system
+Listen on the system bus.
+.TP
+.B -B, --both
+Listen on both buses simultaneously (default).
+.TP
+.B -k, --keep-stdin
+Ignore EOF on stdin.  May be useful for scripting.
+.TP
+.B -c, --control \fIFIFO\fP
+Open (and create if needed) a control fifo with the given name and use
+it as standard input.
+.TP
+.B -t, --takeover \fIFIFO\fP
+Attach to the \fBdbustop\fP instance using \fIFIFO\fP for input, resuming
+interactive control.  Useful if \fBdbustop\fP was started in background.
+.TP
+.B -v, --verbose
+Increase verbosity level, may be given multiple times.
+.TP
+.B -q, --quiet
+Silence informative output in response to commands.  Useful for
+scripting.
+.TP
+.B -i, --interactive
+Force interactive mode even if stdout is not a terminal.  Allows
+e.g. interactive use when piping output to tee:
+
+.EX
+dbustop -i | tee log.txt
+.EE
+.
+.
+.SH COMMANDS
+.
+The program has line-based input, making it suitable for scripted and
+bearable for interactive use.  Commands may be abbreviated if they are
+unambiguous.  Command arguments are separated by spaces, the ones
+taking boolean arguments accept any of "1", "on", "yes", "true" and "0",
+"off", "no", "false"; and the absence of the argument toggles the
+behavior.
+
+.TP
+.B help, ? \fI[COMMAND]\fP
+show on-line help (about \fICOMMAND\fP if given)
+.TP
+.B quit
+back to reality
+.TP
+.B <Return>, overview
+show the overview
+.TP
+.B columns \fI[COLUMNS]\fP
+set the visible columns in the overview
+.TP
+.B order \fI[SORTCOLUMN]\fP
+set the column (and direction) by which the overview is ordered
+.TP
+.B details \fI[WHAT...]\fP
+show selected details (brief + messages by default) of the selected
+clients.  \fIWHAT\fP is one or more of the following: brief, names,
+counters, messages, rules or all.
+.TP
+.B reset \fI[all]\fP
+reset the current (or all) counters of all clients
+.TP
+.B gstats
+print global statistics of all messages seen
+.TP
+.B dups [s|y]
+print processes with more than one connection on a single bus
+.TP
+.B select \fICRITERIA...\fP
+select clients based on the given criteria (OR-ed); see SELECTION for
+more information
+.TP
+.B auto \fI[BOOLEAN|INTERVAL]\fP
+enable or disable auto-refresh (top-like) mode, optionally with given
+refresh interval (in milliseconds, default 1000)
+.TP
+.B log, -- \fI[TEXT]\fP
+annotate the output with the given \fITEXT\fP (or a timestamp if void)
+.TP
+.B monitor \fI[BOOLEAN]\fP
+enable or disable monitor mode
+.TP
+.B ignore-replies \fI[BOOLEAN]\fP
+set or toggle ignoring of reply messages (NOTE: skews message counts and
+sizes)
+.TP
+.B gone-last \fI[BOOLEAN]\fP
+.TP
+.B view \fIOPTION\fP
+set view options:
+.RS
+.TP
+.I all|active|selection
+choose the set of clients that the views show
+.TP
+.I gone-last|gone-mixed
+choose to show exited clients after the living ones or mixed with them
+.TP
+.I totals|current
+select the set of counters to show (current/totals)
+.RE
+.TP
+.B maintenance
+dump internals
+.
+.
+.SH SELECTION
+.
+Certain commands (like `details' or `monitor') take the selection into
+account.  Clients may be selected with the `select' command based on various
+properties.  The command accepts one or more criteria separated by spaces --
+these are OR-ed together.  To clear the selection invoke `select' with no
+arguments.  In other cases usually the first letter of the criteria determines
+its type.  Strings do not need to match exactly, substrings are accepted.  The
+options are described below (with an example for each).
+.
+.TP
+.I X:ID
+selects the client on bus X (either 's' for session or 'y' for system)
+with the unique connection ID
+
+	select s:1.32
+.TP
+.I NUMBER
+selects clients with the given process id
+
+	select 1982
+.TP
+.I STRING
+selects clients whose command line contains the given text
+
+	select browser
+.TP
+.I @NAME
+selects clients who own a the given service name
+
+	select @Tracker
+.TP
+.I %RULE
+selects clients who have a match rule covered by RULE
+
+	select %member='NameOwnerChanged'
+.TP
+.I >STRING
+.TQ
+.I <STRING
+selects clients who sent (or received) the given kind of message (string match
+against the text in the details view, basically "TYPE INTERFACE.MEMBER")
+.TP
+.I *
+selects all clients
+.TP
+.I =
+selects active clients (clients who have sent or received messages since
+the last reset)
+.
+.
+.SH VIEWS: OVERVIEW
+.
+The overview is a tabular display of the clients connected to the
+bus(es).  The visible columns can be specified with the `columns'
+command and `order' allows to set the column on which the ordering is
+based.  The first column is marked with an asterisk '*' if the client is
+gone from the bus (usually it exited) and `reset' clears the list of
+exited peers.
+
+.TP
+.B columns
+displays information the currently enabled columns
+.TP
+.B columns \fI*\fP
+enables all columns
+.TP
+.B columns \fICOLUMN...\fP
+enables given columns (either by index or name)
+.TP
+.B order
+displays the current sort column
+.TP
+.B order \fISORTCOLUMN\fP
+sets the sort column; \fISORTCOLUMN\fP might be the column index or the
+column name, optionally prefixed with '-' to denote descending order
+
+The following columns are available:
+
+.B NR	NAME		DESCRIPTION
+.br
+1.	PID		process id
+.br
+2.	UNIQ		unique connection name
+.br
+3.	NAME		some owned name
+.br
+4.	MR		number of match rules
+.br
+5.	O		outgoing messages
+.br
+6.	OC		outgoing calls
+.br
+7.	OS		outgoing signals
+.br
+8.	OB		outgoing bytes
+.br
+9.	~OB		average outgoing message size
+.br
+10.	I		incoming messages
+.br
+11.	IC		incoming calls
+.br
+12.	IM		incoming matches
+.br
+13.	IB		incoming bytes
+.br
+14.	WK		wakeups caused
+.br
+15.	~WK		average wakeups per outgoing message
+.br
+16.	%WK		percentage of total wakeups caused
+.br
+17.	%O		percentage of total messages sent
+.br
+18.	%OB		percentage of total bytes sent
+.br
+19.	COMM		command line
+.br
+.
+.
+.SH VIEWS: DETAILS
+.
+The `details' command prints some basic information for each client
+(unique connection id, owned names, process id and commandline) followed
+by per-message-per-peer breakdown of sent and received messages.  Other
+information may be requested by giving one or more of the following
+arguments to the command:
+
+.IP brief
+show connection id, command line, pid
+.IP names
+show owned names
+.IP counters
+show counters
+.IP messages
+show per-message statistics
+.IP rules
+show match rules
+.IP all
+show everything
+.P
+Example output:
+
+.RS 4
+.EX
+** select dbus-monitor
+Selected 1 client(s).
+** details all
+CLIENT s:1.9     4253 R dbus-monitor
+OWNED NAMES (0)
+COUNTERS           current     total
+  out_messages           5         5
+  out_calls              5         5
+  out_signals            0         0
+  out_bytes            867       867
+  in_messages           18        18
+  in_calls               0         0
+  in_matches            18        18
+  in_bytes            3368      3368
+  wakeups caused         2         2
+MATCHRULES (4)
+  Rule type='signal'
+  Rule type='method_call'
+  Rule type='method_return'
+  Rule type='error'
+PER-MESSAGE COUNTERS
+  out  C org.freedesktop.DBus.Hello                 1   144  org.freedesktop.DBus
+  out  C org.freedesktop.DBus.AddMatch              4   723  org.freedesktop.DBus
+  in   C org.freedesktop.DBus.Hello                 1   144  :1.10
+  in   C org.freedesktop.DBus.ListNames             1   152  :1.10
+  in   S org.freedesktop.DBus.NameOwnerChanged      2   379  :0
+  in   C org.freedesktop.DBus.AddMatch              2   362  :1.9
+  in   C org.freedesktop.DBus.AddMatch              4   935  :1.10
+  in   C org.freedesktop.DBus.GetNameOwner          8    1k  :1.10
+.EE
+.RE
+
+Here the CLIENT line serves as a header for each client, starting with
+the unique identifier (prefixed by the bus type, 'y' or 's').  This is
+followed by the PID of the client and either the character 'R' if the
+client is still running or 'X' if it has disappeared from the bus.  The
+line ends with the command line of the process.
+
+The PER-MESSAGE COUNTERS section describes the messages sent or received
+by the client.  The line starts with 'in' or 'out' depending on the
+direction of the message, followed by a character noting the type of the
+message ('C' for calls, 'S' for signals, 'R' for replies and 'E' for
+errors).  Next, the message name (interface + member) is shown, followed
+by their count and byte size.  Finally the sender (in case of incoming
+messages) or the destination (for outgoing messages) is printed.
+.
+.
+.SH VIEWS: AUTOREFRESH
+.
+Executing the `auto' command starts automatic printing of the overview
+with the given interval.  In interactive mode the terminal is changed to
+respond to the following single-keypress commands:
+
+.IP "q, Ctrl-D"
+stop automatic refresh
+.IP r
+reset counters
+.IP a
+cycle showing all/active/selected clients
+.IP <
+move the sort column to the left
+.IP >
+move the sort column to the right
+.IP -
+reverse sort order
+.
+.
+.SH MONITOR MODE
+.
+The program can work as a selective dbus-monitor, displaying only the subset
+of messages that involve the currently selected clients.  The monitor output
+format is generally the following (with slight changes for signals and
+replies):
+
+.EX
+TIMESTAMP  LENGTH  SERIAL  TYPE  SENDER  DESTINATION  PATH  INTERFACE.MEMBER
+.EE
+.
+.
+.SH EXAMPLES
+.
+\" TODO add more examples
+.
+.B dbustop
+is designed to be used by scripts.  One way is to pipe the output of a
+script into the standard input, or redirect it from a named fifo.  For
+example to take a snapshot every 2 minutes, one could write:
+
+.EX
+	(while true; do echo --; echo 'details'; sleep 120; done) | dbustop > /tmp/logfile.txt
+.EE
+
+With the -c option it is possible to use a fifo as input:
+
+.EX
+	$ dbustop -c /tmp/dbt-control > /tmp/logfile &
+.EE
+
+Then submit commands with 'echo':
+
+.EX
+	$ echo 'annotate before first test case' > /tmp/dbt-control
+	$ echo overview > /tmp/dbt-control
+.EE
+
+Execute the use case and take a finishing snapshot:
+
+.EX
+	$ echo 'annotate after the test case' > /tmp/dbt-control
+	$ echo overview > /tmp/dbt-control
+	$ echo quit > /tmp/dbt-control
+.EE
+
+Also you have a single opportunity to get back a backgrounded
+.B dbustop
+instance by using the
+.I -t (--takeover)
+option:
+
+.EX
+	$ dbustop -t /tmp/dbt-control
+.EE
+
+Note that this is an irreversible operation, there is no way (for now)
+to put it to background anymore.
+.
+.
+.SH BUGS AND LIMITATIONS
+.
+Sure, why not.  Some are known:
+.IP - 2
+spaces are not handled in match rules
+.IP - 2
+argXpath-type match rules are ignored
+.P
+Please report any bugs or inconsistencies.
+.
+.SH COPYRIGHT
+.
+Copyright \(co 2010 Nokia.
+
+Contact: Akos PASZTORY <akos.pasztory@nokia.com>

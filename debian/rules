@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+binary binary-arch binary-indep build clean install:
+	dh $@
+override_dh_auto_build:
+	make CXXFLAGS=-O2
+	strip dbustop
+override_dh_auto_install:
+	make install PREFIX=/usr DESTDIR=debian/dbustop
+override_dh_auto_configure override_dh_auto_test:

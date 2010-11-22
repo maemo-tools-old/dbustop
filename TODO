@@ -1,0 +1,37 @@
+-- write more examples, make some demo/presentation
+-- details
+   matchrules, number of wakeups because each?
+   messages per type (type+interface+member) per destination or sender
+   group by pid?
+   sort detail by count
+-- selective dbus monitor functionality with timestamps
+   maybe decode arguments? (later)
+   "i want to monitor messages like X"
+-- redirect/tee output to some file at runtime
+-- other stats, max woken, median woken?
+-- selection of clients
+   add/remove to selection?
+   (transitive closure of {app and clients sending to it})
+-- think about the output, make it more machine parseable and human readable
+-- colors:
+   monitor mode: color replies based on turnaround time (how long it took)
+   need to track pending calls
+   if we already trackthem, detail view can be extended to show the call
+   that a reply was response for...
+-- account for service activation (ListActivatableNames and check if
+   a message activated a service)
+-- maybe emphasize processes somehow (group counts by pid), ugh..
+   say in details view group by pid
+-- bling: graphviz output for TPOs (connect active clients)
+-- select clients "who sent this message"
+   who sent to this interface/service?
+   what we can do now:
+   who sent to this destination?
+   who received from this?
+-- "future" selection?  add to selection when messages come.  needs
+   selection-rules
+-- should we redirect stderr to stdout?	 make them the same.
+-- command-specific completion
+   by making Command object more featureful
+-- err, we lost owned names of exited clients, because they lose them.
+   what to do?

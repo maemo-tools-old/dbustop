@@ -1,0 +1,12 @@
+Source: dbustop
+Section: utils
+Priority: optional
+Maintainer: Akos PASZTORY <akos.pasztory@nokia.com>
+Build-Depends: debhelper (>= 7), pkg-config,
+	       libdbus-1-dev (>= 1.4.0), libreadline5-dev
+Standards-Version: 3.8.0
+
+Package: dbustop
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: displays D-Bus activity in a statistical/top-like manner
