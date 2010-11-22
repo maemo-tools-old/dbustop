@@ -10,3 +10,5 @@ Package: dbustop
 Architecture: any
 Depends: ${shlibs:Depends}
 Description: displays D-Bus activity in a statistical/top-like manner
+ Dbustop provides a top-like view to D-Bus activity to help understand
+ interactions between services and clients and to find potential issues.

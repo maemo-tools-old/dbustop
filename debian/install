@@ -1,2 +1,3 @@
 dbustop usr/bin
 dbustop.1 usr/share/man/man1
+dbustop.conf etc/dbus-1/system.d

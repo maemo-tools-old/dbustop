@@ -5,9 +5,11 @@ exec c++ -g -Wall -rdynamic -O0 -std=c++0x \
 #*/
 #endif
 /*
- * Copyright (C) 2010, Nokia.
+ * This file is part of dbustop.
  *
- * Author: Akos PASZTORY <akos.pasztory@nokia.com>
+ * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ *
+ * Contact: Akos PASZTORY <akos.pasztory@nokia.com>
  */
 #define TESTS 0
 #define _GNU_SOURCE 1
@@ -1108,17 +1110,6 @@ Client::~Client()
 	Selection.erase(this);
 	bus->matchmaker.remove_client(this);
 	bus->destinations.erase(unique_name);
-	/*
-	// wtf is this?
-	for (auto di = bus->destinations.begin(), de = bus->destinations.end();
-	     di != de;)
-	{
-		if (di->second == this)
-			bus->destinations.erase(di++);
-		else
-			++di;
-	}
-	*/
 	foreach (ri, match_rules)
 		delete *ri;
 }
@@ -2655,76 +2646,6 @@ cmd_setview(char const *arg)
 	}
 	output("Invalid argument.\n");
 }
-
-#if FUTURE_IS_PRESENT
-struct edgeinfo {
-	Client const *a, *b;
-	string const &msg;
-	Client::MsgDetail const &det;
-
-	edgeinfo(Client const *a, Client const *b,
-		 string const &msg, Client::MsgDetail const &det):
-		a(a), b(b), msg(msg), det(det) {}
-};
-
-static void
-cmd_bling(char const *args)
-{
-	if (!Selection.size()) {
-		output("No selection.\n");
-		return;
-	}
-	FILE *f = stdout;
-	if (*args) {
-		f = fopen(args, "w");
-		if (!f) {
-			log(1, "failed to open %s, falling back to stdout\n",
-			    args);
-			f = stdout;
-		}
-	}
-
-	// XXX here do some clever;
-
-	set<Client const *> nodes;
-	vector<edgeinfo *> edges;
-	foreach (si, Selection) {
-		Client const *cli = *si;
-		auto dests = cli->bus->destinations;
-		Client::Details const &sent = cli->current.sent;
-		Client::Details const &recv = cli->current.received;
-		nodes.insert(cli);
-		foreach (di, sent) {
-			string const &dest = di->first.first;
-			string const &msg = di->first.second;
-			Client const *d;
-			if (dest == "-")
-				d = dests[":0"];
-			else
-				d = dests[dest];
-			edges.push_back(new edgeinfo(cli, d, msg, di->second));
-		}
-	}
-
-	fprintf(f, "digraph {\n");
-	foreach (ni, nodes) {
-		Client const *cli = *ni;
-		fprintf(f, "  node%p [label=\"%s\"]\n", cli,
-			cli->unique_name.c_str());
-	}
-	foreach (ei, edges) {
-		edgeinfo *ed = *ei;
-		fprintf(f, "  node%p -> node%p [label=\"%s\"]\n",
-			ed->a, ed->b, ed->msg.c_str());
-		delete ed;
-	}
-	fprintf(f, "}\n");
-
-	fflush(f);
-	if (f != stdout)
-		fclose(f);
-}
-#endif
 
 static void
 add_command(char const *name, char const *args,

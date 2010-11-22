@@ -6,5 +6,5 @@ override_dh_auto_build:
 	make CXXFLAGS=-O2
 	strip dbustop
 override_dh_auto_install:
-	make install PREFIX=/usr DESTDIR=debian/dbustop
+	make install PREFIX=/usr SYSCONFDIR=/etc DESTDIR=debian/dbustop
 override_dh_auto_configure override_dh_auto_test:
