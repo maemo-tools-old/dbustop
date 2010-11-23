@@ -1672,9 +1672,7 @@ print_details_of(Client const *cli, int what)
 			       longest, si->first.msg.c_str(),
 			       si->second.count);
 			format_bytes(si->second.bytes);
-			printf("  %c%-6s\n",
-			       cli->bus->prefix,
-			       si->first.peer.c_str());
+			printf("  %-7s\n", si->first.peer.c_str());
 		}
 		SM().swap(sm);
 		foreach (si, counters.received)
@@ -1685,9 +1683,7 @@ print_details_of(Client const *cli, int what)
 			       longest, si->first.msg.c_str(),
 			       si->second.count);
 			format_bytes(si->second.bytes);
-			printf("  %c%-6s\n",
-			       cli->bus->prefix,
-			       si->first.peer.c_str());
+			printf("  %-7s\n", si->first.peer.c_str());
 		}
 	}
 
@@ -1861,11 +1857,19 @@ account_message(BusConnection *bus, DBusMessage *msg,
 	free(tmp);
 
 	// 1. at sender
+
 	string msgk(msgkind(msg));
-	//auto sk = make_pair(dest ? dest : "-", msgk);
-	//auto rk = make_pair(sender, msgk);
-	auto sk = Client::DetailKey(dest ? dest : "-", msgk);
-	auto rk = Client::DetailKey(sender, msgk);
+
+	// Prepend bus prefix if it's an unique name.
+	// XXX slight inconsistency, how do you recognize friendly names
+	// different buses?
+	string k(dest ? dest : "-");
+	if (k[0] == ':')
+		k = bus->prefix + k;
+	auto sk = Client::DetailKey(k, msgk);
+	k = bus->prefix;
+	k += sender;
+	auto rk = Client::DetailKey(k, msgk);
 
 	s->current.out_bytes += msg_len;
 	s->total.out_bytes += msg_len;
