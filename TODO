@@ -1,34 +1,31 @@
 -- write more examples, make some demo/presentation
--- details
-   matchrules, number of wakeups because each?
-   messages per type (type+interface+member) per destination or sender
-   group by pid?
-   sort detail by count
--- selective dbus monitor functionality with timestamps
+-- details view:
+   matchrules, number of wakeups because of each?
+   emphasize processes somehow (group counts by pid), ugh..
+   say in details view group by pid
+-- selective dbus monitor functionality with timestamps:
    maybe decode arguments? (later)
    "i want to monitor messages like X"
--- redirect/tee output to some file at runtime
 -- other stats, max woken, median woken?
--- selection of clients
+-- selection of clients:
    add/remove to selection?
    (transitive closure of {app and clients sending to it})
--- think about the output, make it more machine parseable and human readable
+-- "future" selection: add to selection when messages come.  needs
+   selection-rules; probably not worth
 -- colors:
    monitor mode: color replies based on turnaround time (how long it took)
    need to track pending calls
-   if we already trackthem, detail view can be extended to show the call
+   if we already track them, detail view can be extended to show the call
    that a reply was response for...
 -- account for service activation (ListActivatableNames and check if
    a message activated a service)
--- maybe emphasize processes somehow (group counts by pid), ugh..
-   say in details view group by pid
 -- bling: graphviz output for TPOs (connect active clients)
    tried, too messy, needs more thinking
 -- select clients based on their sent/received messages:
    who sent to this service?
    who received from this client?
--- "future" selection: add to selection when messages come.  needs
-   selection-rules; probably not worth
+-- think about the output, make it more machine parseable and human readable
 -- should we redirect stderr to stdout?	 make them the same.
+-- redirect/tee output to some file at runtime?
 -- command-specific completion
    by making Command object more featureful

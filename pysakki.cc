@@ -3038,7 +3038,6 @@ mainloop()
 			}
 
 		if (Autorefresh) {
-			// woken up, check if we need todraw
 			struct timeval tnow;
 			gettimeofday(&tnow, NULL);
 			if (!timercmp(&tnow, &Tnext, <)) {
@@ -3046,7 +3045,7 @@ mainloop()
 				print_top_view();
 				timeradd(&tnow, &Trefresh, &Tnext);
 			}
-			// before we sleep we need to know howmuch
+			// Before we sleep we need to know how much.
 			struct timeval trem;
 			timersub(&Tnext, &tnow, &trem);
 			timeout = tv_to_ms(&trem);
