@@ -296,7 +296,7 @@ static bool Ignore_replies = false;
 static unordered_set<Client *> Selection;
 static bool Alive = true;
 static bool Autorefresh;
-static unsigned long TRefresh = 1000;
+static timeval Trefresh, Tnext;
 static bool Interactive;
 static pid_t Giveway_pid;
 struct winsize Winsize;
@@ -543,6 +543,19 @@ sighandler(int sig)
 	case SIGINT:   Alive = false; break;
 	case SIGWINCH: Winsize.ws_col = 0; break;
 	}
+}
+
+static inline void
+ms_to_tv(struct timeval *tv, unsigned long ms)
+{
+	tv->tv_sec = ms/ 1000;
+	tv->tv_usec = (ms - tv->tv_sec * 1000) * 1000;
+}
+
+static inline int
+tv_to_ms(struct timeval *tv)
+{
+	return tv->tv_sec * 1000 + tv->tv_usec / 1000;
 }
 
 /* -------------
@@ -2355,7 +2368,7 @@ cmd_autorefresh(char const *args)
 		unsigned long t;
 		t = strtoul(args, &end, 10);
 		if (!*end && t > 2) {
-			TRefresh = t;
+			ms_to_tv(&Trefresh, t);
 			Autorefresh = true;
 		} else if (!bool_fromarg(args, Autorefresh))
 			return;
@@ -2363,11 +2376,14 @@ cmd_autorefresh(char const *args)
 	output("Autorefresh: %s",
 	       Autorefresh ? "on" : "off");
 	if (Autorefresh)
-		output(" (%lums)", TRefresh);
+		output(" (%dms)", tv_to_ms(&Trefresh));
 	output(".\n");
 	if (Autorefresh) {
-		rl_callback_handler_remove();
-		rl_prep_terminal(1);
+		if (Interactive) {
+			rl_callback_handler_remove();
+			rl_prep_terminal(1);
+		}
+		gettimeofday(&Tnext, NULL);
 	}
 }
 
@@ -2962,10 +2978,9 @@ mainloop()
 	fds[fdi].events = POLLIN | POLLHUP;
 
 	Last_reset = Last_event;
+	int timeout = -1;
 	while (Alive) {
-		int nready, timeout = -1;
-		if (Autorefresh)
-			timeout = TRefresh;
+		int nready;
 		do nready = poll(fds, nfds, timeout);
 		while (nready == -1 && errno == EINTR && Alive);
 		if (!Alive)
@@ -3016,8 +3031,23 @@ mainloop()
 				       DBUS_DISPATCH_DATA_REMAINS);
 			}
 
-		if (Autorefresh)
-			print_top_view();
+		if (Autorefresh) {
+			// woken up, check if we need todraw
+			struct timeval tnow;
+			gettimeofday(&tnow, NULL);
+			if (!timercmp(&tnow, &Tnext, <)) {
+				// A refresh is due.
+				print_top_view();
+				timeradd(&tnow, &Trefresh, &Tnext);
+			}
+			// before we sleep we need to know howmuch
+			struct timeval trem;
+			timersub(&Tnext, &tnow, &trem);
+			timeout = tv_to_ms(&trem);
+			if (timeout < 0)
+				timeout = 0;
+		} else
+			timeout = -1;
 	}
 }
 
