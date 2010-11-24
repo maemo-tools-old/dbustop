@@ -23,15 +23,12 @@
 -- maybe emphasize processes somehow (group counts by pid), ugh..
    say in details view group by pid
 -- bling: graphviz output for TPOs (connect active clients)
--- select clients "who sent this message"
-   who sent to this interface/service?
-   what we can do now:
-   who sent to this destination?
-   who received from this?
--- "future" selection?  add to selection when messages come.  needs
-   selection-rules
+   tried, too messy, needs more thinking
+-- select clients based on their sent/received messages:
+   who sent to this service?
+   who received from this client?
+-- "future" selection: add to selection when messages come.  needs
+   selection-rules; probably not worth
 -- should we redirect stderr to stdout?	 make them the same.
 -- command-specific completion
    by making Command object more featureful
--- err, we lost owned names of exited clients, because they lose them.
-   what to do?

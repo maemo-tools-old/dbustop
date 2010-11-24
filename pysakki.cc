@@ -164,6 +164,7 @@ struct Client {
 	unsigned long last_activity;
 
 	set<string> owned_names;
+	set<string> ever_owned_names;
 	list<Matchrule *> match_rules;
 
 	struct MsgDetail {
@@ -1164,6 +1165,7 @@ Client::add_owned_name(char const *name)
 {
 	owned_names.insert(name);
 	bus->destinations[name] = this;
+	ever_owned_names.insert(name);
 }
 
 void
@@ -1222,7 +1224,9 @@ Client::dump(FILE *stream) const
 		exited ? " (exited)" : "",
 		cmdline.c_str(), owned_names.size());
 	foreach (ni, owned_names)
-		fprintf(stream, "    %s\n", ni->c_str());
+		fprintf(stream, "     %s\n", ni->c_str());
+	foreach (ni, ever_owned_names)
+		fprintf(stream, "    *%s\n", ni->c_str());
 	fprintf(stream, "  matchrules (%zu):\n",
 		match_rules.size());
 	foreach (ri, match_rules) {
@@ -1631,7 +1635,9 @@ print_details_of(Client const *cli, int what)
 	if (what & DNames) {
 		printf("OWNED NAMES (%zu)\n", cli->owned_names.size());
 		foreach (ni, cli->owned_names)
-			printf("  %s\n", ni->c_str());
+			printf("   %s\n", ni->c_str());
+		foreach (ni, cli->ever_owned_names)
+			printf("  *%s\n", ni->c_str());
 	}
 
 	if (what & DCounters) {
