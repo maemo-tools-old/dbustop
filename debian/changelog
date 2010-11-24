@@ -1,6 +1,12 @@
+dbustop (1.0-2) unstable; urgency=low
+
+  * Fixed autorefresh mode to behave like advertised.
+  * Now we remember owned names even after they are lost.
+
+ -- Akos PASZTORY <akos.pasztory@nokia.com>  Wed, 24 Nov 2010 10:04:32 +0200
+
 dbustop (1.0-1) unstable; urgency=low
 
   * It begins.
 
  -- Akos PASZTORY <akos.pasztory@nokia.com>  Mon, 22 Nov 2010 16:19:47 +0200
-
