@@ -1,6 +1,6 @@
 -- write more examples, make some demo/presentation
 -- details view:
-   matchrules, number of wakeups because of each?
+   per-matchrule wakeups
    emphasize processes somehow (group counts by pid), ugh..
    say in details view group by pid
 -- selective dbus monitor functionality with timestamps:
@@ -21,11 +21,14 @@
    a message activated a service)
 -- bling: graphviz output for TPOs (connect active clients)
    tried, too messy, needs more thinking
+   see with real world case
 -- select clients based on their sent/received messages:
    who sent to this service?
    who received from this client?
 -- think about the output, make it more machine parseable and human readable
 -- should we redirect stderr to stdout?	 make them the same.
 -- redirect/tee output to some file at runtime?
+   or dump something to file for history
 -- command-specific completion
    by making Command object more featureful
+-- stop/pause listening so further messages don't screw up the numbers

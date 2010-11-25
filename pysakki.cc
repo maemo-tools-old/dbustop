@@ -164,7 +164,7 @@ struct Client {
 	unsigned long last_activity;
 
 	set<string> owned_names;
-	set<string> ever_owned_names;
+	set<string> former_names;
 	list<Matchrule *> match_rules;
 
 	struct MsgDetail {
@@ -1165,7 +1165,6 @@ Client::add_owned_name(char const *name)
 {
 	owned_names.insert(name);
 	bus->destinations[name] = this;
-	ever_owned_names.insert(name);
 }
 
 void
@@ -1173,6 +1172,7 @@ Client::remove_owned_name(char const *name)
 {
 	owned_names.erase(name);
 	bus->destinations.erase(name);
+	former_names.insert(name);
 }
 
 void
@@ -1225,7 +1225,7 @@ Client::dump(FILE *stream) const
 		cmdline.c_str(), owned_names.size());
 	foreach (ni, owned_names)
 		fprintf(stream, "     %s\n", ni->c_str());
-	foreach (ni, ever_owned_names)
+	foreach (ni, former_names)
 		fprintf(stream, "    *%s\n", ni->c_str());
 	fprintf(stream, "  matchrules (%zu):\n",
 		match_rules.size());
@@ -1636,7 +1636,7 @@ print_details_of(Client const *cli, int what)
 		printf("OWNED NAMES (%zu)\n", cli->owned_names.size());
 		foreach (ni, cli->owned_names)
 			printf("   %s\n", ni->c_str());
-		foreach (ni, cli->ever_owned_names)
+		foreach (ni, cli->former_names)
 			printf("  *%s\n", ni->c_str());
 	}
 
