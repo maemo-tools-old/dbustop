@@ -183,11 +183,6 @@ struct Client {
 			{}
 	};
 
-	// TODO some more descriptive ds instead of pair...
-	// also, map or unsorted map?
-
-	// (sender/dest, msgkind) -> (count, bytes)
-	//typedef map<pair<string, string>, MsgDetail> Details;
 	typedef map<DetailKey, MsgDetail> Details;
 
 	struct Counters {
@@ -297,7 +292,8 @@ static bool Ignore_replies = false;
 static unordered_set<Client *> Selection;
 static bool Alive = true;
 static bool Autorefresh;
-static timeval Trefresh, Tnext;
+static timeval Trefresh = { 1, 0 };
+static timeval Tnext;
 static bool Interactive;
 static pid_t Giveway_pid;
 struct winsize Winsize;
@@ -2840,7 +2836,6 @@ process_top_command(char cmd)
 		Sort_reverse = !Sort_reverse;
 		break;
 	default:
-		printf("%d\n", cmd);
 		break;
 	}
 }
