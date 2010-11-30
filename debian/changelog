@@ -1,3 +1,11 @@
+dbustop (1.0-3) unstable; urgency=low
+
+  * Bugfixes:
+    - default autorefresh interval was zero.
+    - owned names were duplicated
+
+ -- Akos PASZTORY <akos.pasztory@nokia.com>  Tue, 30 Nov 2010 10:43:25 +0200
+
 dbustop (1.0-2) unstable; urgency=low
 
   * Fixed autorefresh mode to behave like advertised.
