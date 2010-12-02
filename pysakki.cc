@@ -870,10 +870,20 @@ Matchmaker::hash_msg(DBusMessage *msg)
 void
 Matchmaker::dump(FILE *stream) const
 {
-	fprintf(stream, "rules with interface+member (%zu)\n", rules.size());
-	foreach (ri, rules) {
-		fprintf(stream, "  %lu => ", ri->first);
-		ri->second->dump(stream);
+	fprintf(stream, "rules with interface+member (%zu, %zu buckets)\n",
+		rules.size(), rules.bucket_count());
+	for (auto ri = rules.begin(), re = rules.end(); ri != re; )
+	{
+		unsigned long k = ri->first;
+		size_t c = rules.count(k);
+		fprintf(stream, "  %lu (%zu) => {\n", k, c);
+		// now iterate while key is same
+		while (ri != re && ri->first == k) {
+			fprintf(stream, "    ");
+			ri->second->dump(stream);
+			++ri;
+		}
+		fprintf(stream, "  }\n");
 	}
 	fprintf(stream, "rules without (%zu)\n", rules2.size());
 	foreach (ri, rules2) {
