@@ -291,7 +291,7 @@ static bool Ignore_replies = false;
 static unordered_set<Client *> Selection;
 static bool Alive = true;
 static bool Autorefresh;
-static timeval Trefresh = { 1, 0 };
+static timeval Trefresh = { 0, 500 * 1000 };
 static timeval Tnext;
 static bool Interactive;
 static pid_t Giveway_pid;
@@ -2749,10 +2749,12 @@ setup_ui()
 	Active_columns.insert(CUniqueName);
 	Active_columns.insert(CNrMatchrules);
 	Active_columns.insert(COutMessages);
+	Active_columns.insert(COutCalls);
+	Active_columns.insert(COutSignals);
 	Active_columns.insert(CInMessages);
+	Active_columns.insert(CInCalls);
+	Active_columns.insert(CInMatches);
 	Active_columns.insert(CWakeups);
-	Active_columns.insert(CPerWk);
-	Active_columns.insert(CPerOutMessages);
 	Active_columns.insert(CCmdline);
 
 	Sort_column = COutMessages;
@@ -2821,7 +2823,6 @@ process_top_command(char cmd)
 	switch (cmd) {
 	case 'a':
 		Use_view = (Use_view + 1) % ViewLast;
-		output("Use view %d\n", Use_view);
 		break;
 	case '\004': // Ctrl-d
 	case 'q':
