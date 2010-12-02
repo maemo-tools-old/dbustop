@@ -2251,7 +2251,7 @@ select_by_owned_name(char const *str)
 	foreach (bi, Buses) {
 		foreach (pi, (*bi)->peers)
 			foreach (ni, pi->second->owned_names)
-				if (ni->find(ss))
+				if (ni->find(ss) != string::npos)
 					add_sel(pi->second);
 	}
 }
