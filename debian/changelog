@@ -1,3 +1,11 @@
+dbustop (1.0-4) unstable; urgency=low
+
+  * Bugfixes: rule matching.
+  * Show command lines without arguments in interactive mode.
+  * Default columns and refresh interval changed.
+
+ -- Akos PASZTORY <akos.pasztory@nokia.com>  Thu, 02 Dec 2010 11:50:19 +0200
+
 dbustop (1.0-3) unstable; urgency=low
 
   * Bugfixes:
