@@ -112,7 +112,7 @@ struct BusConnection;
 struct Matchrule {
 	static Matchrule *create(char const *rule);
 
-	bool applies(DBusMessage *msg) const;
+	bool applies(DBusMessage *msg, Client *sender) const;
 	void dump(FILE *stream) const;
 
 	Client *owner;
@@ -212,9 +212,6 @@ struct Matchmaker {
 
 	static unsigned long hash_rule(Matchrule *rule);
 	static unsigned long hash_msg(DBusMessage *msg);
-
-	// return list of clients matching msg
-	list<Client *> matching_clients(Client *target, DBusMessage *msg) const;
 
 	unordered_multimap<unsigned long, Matchrule *> rules;
 	list<Matchrule *> rules2;
@@ -870,30 +867,6 @@ Matchmaker::hash_msg(DBusMessage *msg)
         return h;
 }
 
-list<Client *>
-Matchmaker::matching_clients(Client *target, DBusMessage *msg) const
-{
-	list<Client *> ret;
-	unsigned long msgh = hash_msg(msg);
-	for (auto range = rules.equal_range(msgh);
-	     range.first != range.second; ++range.first)
-	{
-		Matchrule *rule = range.first->second;
-		Client *c = rule->owner;
-		if (!rule->applies(msg) || target == c)
-			continue;
-		ret.push_back(c);
-	}
-	foreach (ri, rules2) {
-		Matchrule *rule = *ri;
-		Client *c = rule->owner;
-		if (!rule->applies(msg) || target == c)
-			continue;
-		ret.push_back(c);
-	}
-	return ret;
-}
-
 void
 Matchmaker::dump(FILE *stream) const
 {
@@ -1001,13 +974,19 @@ Matchrule *Matchrule::create(char const *rule)
 }
 
 bool
-Matchrule::applies(DBusMessage *msg) const
+Matchrule::applies(DBusMessage *msg, Client *sendingc) const
 {
 	if (flags & HasType && type != dbus_message_get_type(msg))
 		return false;
-	if (flags & HasSender &&
-	    strcmp0(sender.c_str(), dbus_message_get_sender(msg)))
-		return false;
+	if (flags & HasSender) {
+		// sender is always a unique name in the message
+		// but in the rule it can be a service name
+		// so get the current owner of the rule's sender
+		// and compare with the real sending client
+		Client *expectedc = owner->bus->destinations[sender];
+		if (!expectedc || expectedc != sendingc)
+			return false;
+	}
 	if (flags & HasDest &&
 	    strcmp0(dest.c_str(), dbus_message_get_destination(msg)))
 		return false;
@@ -1018,7 +997,7 @@ Matchrule::applies(DBusMessage *msg) const
 	    strcmp0(interface.c_str(), dbus_message_get_interface(msg)))
 		return false;
 	if (flags & HasMember &&
-	    strcmp0(member.c_str(), dbus_message_get_path(msg)))
+	    strcmp0(member.c_str(), dbus_message_get_member(msg)))
 		return false;
 	if (flags & HasArgs) {
 		int maxarg = args.rbegin()->first;
@@ -1841,6 +1820,27 @@ handle_nameownerchanged(BusConnection *bus, char const *name,
 }
 
 static void
+account_incoming_match(Client *p, unsigned int &woken,
+		       Client::DetailKey const &rk,
+		       bool &had_selected, int msg_len)
+{
+	p->current.in_matches++;
+	p->total.in_matches++;
+	p->current.in_messages++;
+	p->total.in_messages++;
+	++woken;
+	p->current.in_bytes += msg_len;
+	p->total.in_bytes += msg_len;
+	p->current.received[rk].count += 1;
+	p->total.received[rk].count += 1;
+	p->current.received[rk].bytes += msg_len;
+	p->total.received[rk].bytes += msg_len;
+	p->last_activity = Last_event;
+	if (Monitor)
+		had_selected |= is_selected(p);
+}
+
+static void
 account_message(BusConnection *bus, DBusMessage *msg,
 		char const *sender, char const *dest,
 		struct timeval *t)
@@ -1852,7 +1852,6 @@ account_message(BusConnection *bus, DBusMessage *msg,
 
 	++Last_event;
 
-	// Hello Ladies!  Look at your code...
 	Client *s = bus->peers[sender];
 	bool had_selected = false;
 
@@ -1871,7 +1870,7 @@ account_message(BusConnection *bus, DBusMessage *msg,
 	dbus_message_marshal(msg, &tmp, &msg_len);
 	free(tmp);
 
-	// 1. at sender
+	// 1. account at sender
 
 	string msgk(msgkind(msg));
 
@@ -1903,11 +1902,10 @@ account_message(BusConnection *bus, DBusMessage *msg,
 	}
 	s->last_activity = Last_event;
 
-	// ... now back to mine!  Now back at your code!
 	// 2. at destinations
 	unsigned int woken = 0;
 
-	// Check direct destination.
+	// check direct destination
 	Client *target = NULL;
 	if (dest && (target = bus->destinations[dest])) {
 		target->current.in_messages++;
@@ -1925,28 +1923,27 @@ account_message(BusConnection *bus, DBusMessage *msg,
 			had_selected |= is_selected(target);
 	}
 
-	// Look up matchrule based on some hash of the message.
-	list<Client *> const &matches =
-		bus->matchmaker.matching_clients(target, msg);
-	foreach (ci, matches) {
-		Client *p = *ci;
-		p->current.in_matches++;
-		p->total.in_matches++;
-		p->current.in_messages++;
-		p->total.in_messages++;
-		++woken;
-		p->current.in_bytes += msg_len;
-		p->total.in_bytes += msg_len;
-		p->current.received[rk].count += 1;
-		p->total.received[rk].count += 1;
-		p->current.received[rk].bytes += msg_len;
-		p->total.received[rk].bytes += msg_len;
-		p->last_activity = Last_event;
-		if (Monitor)
-			had_selected |= is_selected(p);
+	// look up matchrules based on some hash of the message
+	unsigned long msgh = Matchmaker::hash_msg(msg);
+	for (auto range = bus->matchmaker.rules.equal_range(msgh);
+	     range.first != range.second; ++range.first)
+	{
+		Matchrule *rule = range.first->second;
+		Client *c = rule->owner;
+		if (target == c || !rule->applies(msg, s))
+			continue;
+		account_incoming_match(c, woken, rk, had_selected, msg_len);
+	}
+	// then check the unhashed ones
+	foreach (ri, bus->matchmaker.rules2)
+	{
+		Matchrule *rule = *ri;
+		Client *c = rule->owner;
+		if (target == c || !rule->applies(msg, s))
+			continue;
+		account_incoming_match(c, woken, rk, had_selected, msg_len);
 	}
 
-	// ... back to me again!  Does your code smell like mine?
 	// 3. at sender after we know the destinations
 	s->current.wakeups += woken;
 	s->total.wakeups += woken;
