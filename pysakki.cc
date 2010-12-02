@@ -46,6 +46,7 @@ exec c++ -g -Wall -rdynamic -O0 -std=c++0x \
 #include <readline/readline.h>
 #include <readline/history.h>
 
+using std::min;
 using std::list;
 using std::vector;
 using std::string;
@@ -158,6 +159,7 @@ struct Client {
 
 	pid_t pid;
 	mutable string cmdline;
+	mutable string::size_type arg0_len;
 	BusConnection *bus;
 	string unique_name;
 	bool exited;
@@ -1098,8 +1100,8 @@ bool operator<(Client::DetailKey const &a, Client::DetailKey const &b)
 }
 
 Client::Client(BusConnection *bus, char const *uniq) :
-	pid(0), bus(bus), unique_name(uniq), exited(false), last_activity(0),
-	current({0}), total({0})
+	pid(0), arg0_len(0), bus(bus), unique_name(uniq), exited(false),
+	last_activity(0), current({0}), total({0})
 {
 	bus->destinations[unique_name] = this;
 }
@@ -1295,11 +1297,18 @@ Client::refresh_cmdline() const
 {
 	/* HACK: requery command line if the current one is booster or
 	 * applauncher. */
-	if (exited ||
-	    !(strstr(cmdline.c_str(), "applauncherd.bin") ||
-	      strstr(cmdline.c_str(), "booster")))
-		return;
-	cmdline = cmdline_from_pid(pid);
+	if (!exited &&
+	    (strstr(cmdline.c_str(), "applauncherd.bin") ||
+	     strstr(cmdline.c_str(), "booster")))
+	{
+		cmdline = cmdline_from_pid(pid);
+	}
+	// find the basename
+	if (!arg0_len) {
+		arg0_len = cmdline.find(' ');
+		if (arg0_len == string::npos)
+			arg0_len = cmdline.size();
+	}
 }
 
 /* ------------
@@ -1473,13 +1482,15 @@ format_column(ColumnId column, Client const &cli,
 			100.0f * c.out_bytes / Stats.total_bytes : 0;
 		return printf(fmt, v);
 	}
-	case CCmdline:
+	case CCmdline: {
 		cli.refresh_cmdline();
-		if (Interactive)
-			return printf("%-.*s", Winsize.ws_col - printed,
-				      cli.cmdline.c_str());
-		else
+		if (Interactive) {
+			size_t w = min(size_t(Winsize.ws_col - printed),
+				       cli.arg0_len);
+			return printf("%-.*s", w, cli.cmdline.c_str());
+		} else
 			return printf("%s", cli.cmdline.c_str());
+	}
 	}
 	/* NOTREACHED */
 	abort();
