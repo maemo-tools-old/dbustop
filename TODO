@@ -3,6 +3,7 @@
    per-matchrule wakeups (<- maybe it can be seen from incoming messages)
    emphasize processes somehow (group counts by pid), ugh..
    say in details view group by pid
+   details order by sent messages or something useful
 -- selective dbus monitor functionality with timestamps:
    maybe decode arguments? (later)
    "i want to monitor messages like X"
@@ -36,3 +37,4 @@
    by making Command object more featureful
 -- profile and optimize it, split it, rewrite it :)
 -- rewrite parts which are not performance critical to be more convenient
+-- allow matching NOC signals without arg0
