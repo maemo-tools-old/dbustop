@@ -1,7 +1,7 @@
 Name: dbustop
 Version: 1.0.4
 Release: 1%{?dist}
-Summary: displays D-Bus activity in a statistical/top-like manner
+Summary: Displays D-Bus activity in a statistical/top-like manner
 Group: Development/Tools
 License: GPLv2+
 URL: http://www.gitorious.org/+maemo-tools-developers/maemo-tools/dbustop
@@ -27,10 +27,26 @@ make install PREFIX=/usr SYSCONFDIR=/etc DESTDIR=%{buildroot}
 rm -rf %{buildroot}
 
 %files
-%defattr(755,root,root,-)
+%defattr(-,root,root,-)
 %{_bindir}/dbustop
-%defattr(644,root,root,-)
 %{_mandir}/man1/dbustop.1.gz
 %config %{_sysconfdir}/dbus-1/system.d/%{name}.conf
 %doc LICENSE
 
+%changelog
+* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.4
+  * Bugfixes: rule matching.
+  * Show command lines without arguments in interactive mode.
+  * Default columns and refresh interval changed.
+
+* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.3
+  * Bugfixes:
+    - default autorefresh interval was zero.
+    - owned names were duplicated
+
+* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.2
+  * Fixed autorefresh mode to behave like advertised.
+  * Now we remember owned names even after they are lost.
+
+* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.1
+  * It begins.

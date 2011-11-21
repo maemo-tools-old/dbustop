@@ -1,0 +1,17 @@
+
+dbustop (1.0-4), 02 Dec 2010:
+  * Bugfixes: rule matching.
+  * Show command lines without arguments in interactive mode.
+  * Default columns and refresh interval changed.
+
+dbustop (1.0-3), 30 Nov 2010:
+  * Bugfixes:
+    - default autorefresh interval was zero.
+    - owned names were duplicated
+
+dbustop (1.0-2), 24 Nov 2010:
+  * Fixed autorefresh mode to behave like advertised.
+  * Now we remember owned names even after they are lost.
+
+dbustop (1.0-1), 22 Nov 2010:
+  * It begins.
