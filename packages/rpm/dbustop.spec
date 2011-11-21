@@ -1,6 +1,6 @@
 Name: dbustop
-Version: 1.0.4
-Release: 1%{?dist}
+Version: 1.0
+Release: 4%{?dist}
 Summary: Displays D-Bus activity in a statistical/top-like manner
 Group: Development/Tools
 License: GPLv2+
@@ -34,19 +34,19 @@ rm -rf %{buildroot}
 %doc LICENSE
 
 %changelog
-* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.4
+* Thu Dec 02 2010 Eero Tamminen <eero.tamminen@nokia.com> 1.0-4
   * Bugfixes: rule matching.
   * Show command lines without arguments in interactive mode.
   * Default columns and refresh interval changed.
 
-* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.3
+* Tue Nov 30 2010 Eero Tamminen <eero.tamminen@nokia.com> 1.0-3
   * Bugfixes:
     - default autorefresh interval was zero.
     - owned names were duplicated
 
-* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.2
+* Wed Nov 24 2010 Eero Tamminen <eero.tamminen@nokia.com> 1.0-2
   * Fixed autorefresh mode to behave like advertised.
   * Now we remember owned names even after they are lost.
 
-* Mon Nov 21 2011 Eero Tamminen <eero.tamminen@nokia.com> 1.0.1
+* Mon Nov 22 2010 Eero Tamminen <eero.tamminen@nokia.com> 1.0-1
   * It begins.
